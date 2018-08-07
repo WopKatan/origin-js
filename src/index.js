@@ -1,7 +1,7 @@
 import ContractService from './services/contract-service'
 import IpfsService from './services/ipfs-service'
 import { Attestations } from './resources/attestations'
-import Listings from './resources/listings'
+import { Listings, SearchQuery } from './resources/listings'
 import Notifications from './resources/notifications'
 import Purchases from './resources/purchases'
 import Reviews from './resources/reviews'
@@ -87,4 +87,4 @@ class Origin {
   }
 }
 
-module.exports = Origin
+module.exports = { Origin, SearchQuery }

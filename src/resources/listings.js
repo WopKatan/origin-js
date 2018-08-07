@@ -36,6 +36,15 @@ function validate(validateFn, data, schema) {
   }
 }
 
+class SearchQuery {
+  // SearchQuery encapsulates the properties of a search: query string, filters, etc...
+  constructor( {rawQuery, }) {
+    // Raw query string as entered by the user.
+    this.rawQuery = rawQuery
+    // TODO(franck): add relevant fields.
+  }
+}
+
 class Listings extends ResourceBase {
   constructor({
     contractService,
@@ -52,7 +61,7 @@ class Listings extends ResourceBase {
   }
 
   /*
-      Public mehods
+      Public methods
   */
 
   // fetches all listings (all data included)
@@ -102,20 +111,24 @@ class Listings extends ResourceBase {
   async search(query) {
     // Issues an API call to the bridge server for searching listings.
     // Args:
-    //   query(string): search query.
+    //   query(SearchQuery): query object.
     // Returns:
     //   list(int): listing ids that match the query.
+    if (query.rawQuery == '') {
+      return []
+    }
 
     // Make the search API call to the bridge server.
-    const url = appendSlash(this.indexingServerUrl) + 'api/search/listings?query=' + query
+    const url = encodeURI(
+      appendSlash(this.indexingServerUrl) + 'api/search/listings?query=' + query.rawQuery)
     const response = await this.fetch(url, { method: 'GET' })
     if (response.status != 200) {
       throw new Error('Search API call failed with status ', response.status)
     }
     const json = await response.json()
 
-    // Extract listing addresses returned in the "_id" field of the search results.
-    let addresses = json.listings.map(listing => listing._id)
+    // Extract listing addresses from the "_id" field of the search results.
+    const addresses = json.listings.map(listing => listing._id)
 
     // TODO(franck): Fix once we move to new contracts.
     // Currently the React ListingGrids component manipulates listing ids.
@@ -135,10 +148,10 @@ class Listings extends ResourceBase {
     const listingsRegistry = await this.contractService.deployed(contract)
 
     // Build a map of address -> id.
-    let addressToId = {}
+    const addressToId = {}
     await Promise.all(
       listingIds.map(async id => {
-        let address = await listingsRegistry.methods.getListingAddress(id).call()
+        const address = await listingsRegistry.methods.getListingAddress(id).call()
         addressToId[address] = id
       } )
     )
@@ -147,7 +160,7 @@ class Listings extends ResourceBase {
     // Note: the search indexer aggressively indexes listings without waiting for block
     // confirmation. Therefore in rare cases a search may return an address that is not recorded
     // in the listing registry. To guard against that we filter out address that fail lookup.
-    let searchIds = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
+    const searchIds = addresses.map(address => addressToId[address]).filter(id => id !== undefined)
 
     return searchIds
   }
@@ -538,4 +551,7 @@ class Listings extends ResourceBase {
   }
 }
 
-module.exports = Listings
+module.exports = {
+  Listings,
+  SearchQuery
+}
