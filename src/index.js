@@ -2,6 +2,8 @@ import ContractService from './services/contract-service'
 import IpfsService from './services/ipfs-service'
 import { Attestations } from './resources/attestations'
 import { Listings, SearchQuery } from './resources/listings'
+import Listings from './resources/listings'
+import Marketplace from './resources/marketplace'
 import Notifications from './resources/notifications'
 import Purchases from './resources/purchases'
 import Reviews from './resources/reviews'
@@ -30,7 +32,8 @@ class Origin {
     web3,
     ipfsCreator,
     OrbitDB,
-    ecies
+    ecies,
+    messagingNamespace
   } = {}) {
     this.contractService = new ContractService({ contractAddresses, web3 })
     this.ipfsService = new IpfsService({
@@ -61,6 +64,13 @@ class Origin {
       fetch
     })
 
+    this.marketplace = new Marketplace({
+      contractService: this.contractService,
+      ipfsService: this.ipfsService,
+      indexingServerUrl,
+      fetch
+    })
+
     this.notifications = new Notifications({
       listings: this.listings,
       purchases: this.purchases,
@@ -82,7 +92,8 @@ class Origin {
       contractService: this.contractService,
       ipfsCreator,
       OrbitDB,
-      ecies
+      ecies,
+      messagingNamespace
     })
   }
 }
